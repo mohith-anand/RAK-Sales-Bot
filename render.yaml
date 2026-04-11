@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: rak-tiles-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false   # Set manually in Render dashboard — never commit your key!
+      - key: ALLOWED_ORIGINS
+        sync: false   # Set to your Vercel URL e.g: https://your-app.vercel.app
+    healthCheckPath: /

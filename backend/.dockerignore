@@ -1,0 +1,28 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment — never include this
+venv/
+env/
+.venv/
+
+# Local env secrets
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Raw source data (large Excel files) — not needed at runtime
+data/raw_excel/
+
+# Scripts (evaluation tools, not needed in production)
+scripts/

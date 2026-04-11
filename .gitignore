@@ -1,0 +1,70 @@
+# Environments
+.env
+backend/.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*
+!.env.example
+!frontend/.env.production
+
+# API keys and secrets
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+!frontend/src/lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+backend/venv/
+backend/env/
+.venv
+
+# Chroma Vector DB — committed to repo so Docker image can bundle it
+# backend/data/vector_db/   <-- intentionally NOT excluded for deployment
+backend/run/data/vector_db/
+backend/scripts/chroma_db/
+
+# Scratch & Temporary
+tmp/
+*.log
+
+# Generated evaluation output — contains internal scoring data
+backend/scripts/eval_results.json
+
+# Raw source data — large Excel files, not needed in repo
+backend/data/raw_excel/
+
+# Node & Frontend
+node_modules/
+.npm
+frontend/.next/
+frontend/dist/
+frontend/out/
+
+# Editor settings
+.vscode/
+
+# OS Files
+.DS_Store
+Thumbs.db
