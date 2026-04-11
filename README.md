@@ -16,7 +16,7 @@ Images of the Sales Assistant:
 ![image alt](https://github.com/mohith-anand/RAK-Sales-Bot/blob/b0c0cda5bbbf4e1a1943d4e9636989dd19e6ef10/Image%202.png)
 <p align="center">
 ![image alt](https://github.com/mohith-anand/RAK-Sales-Bot/blob/b0c0cda5bbbf4e1a1943d4e9636989dd19e6ef10/Image%203.png)
-
+</p>
 ## 🧠 Key AI Capabilities
 
 ### 1. Hybrid RAG Pipeline
