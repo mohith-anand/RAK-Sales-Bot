@@ -17,7 +17,7 @@ Vector similarity alone isn't enough for sales. Our custom **Re-ranking Logic** 
 - **Diversity Algorithm**: Ensures the top 3 results come from different product series to maximize catalog exposure.
 
 ### 3. Session-Aware Context
-Using **Gemini 2.5 Flash**, the advisor maintains a 10-message conversational memory. This enables complex, multi-turn design discussions (e.g., *"Show me those in grey,"* or *"What was the size of the first one?"*).
+Using **Gemini 3 Flash**, the advisor maintains a 10-message conversational memory. This enables complex, multi-turn design discussions (e.g., *"Show me those in grey,"* or *"What was the size of the first one?"*).
 
 ---
 
