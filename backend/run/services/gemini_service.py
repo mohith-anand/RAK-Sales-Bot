@@ -150,9 +150,18 @@ def requires_product_search(user_query: str, history: list = []) -> bool:
 
         prompt = f"""
 You are an intent classifier for a tile and ceramics sales chatbot.
-Does the following user query require searching the product database to find specific tiles, ceramics, sanitary ware, or product details?
-If the user is just saying hello, asking a general question, or clarifying something without asking for products, respond NO.
-If the user is asking for product recommendations, specifications, colors, sizes, or anything related to catalog items, respond YES.
+Does the following user query require searching the product database to find specific tiles, ceramics, or product details?
+
+Respond NO if:
+- User is asking about PRICE, COST, or QUOTES (e.g. "how much?", "price list").
+- User is just saying hello or goodbye.
+- User is asking about RAK Ceramics company info or locations.
+- User is asking for a sales representative to contact them.
+
+Respond YES if:
+- User is asking for recommendations based on color, size, material, or space.
+- User is asking for technical specifications of a specific SKU or series.
+- User is asking "What tiles do you have for [X]?".
 
 Respond with ONLY "YES" or "NO".
 
@@ -175,6 +184,13 @@ Answer (YES/NO):"""
 
 def generate_tile_response(user_query: str, tile_results: list, history: list = []):
     try:
+        # Safety check: If the query is about cost/pricing, we never show tiles
+        pricing_keywords = ["price", "cost", "how much", "quote", "budget", "rate", "sq ft", "payment"]
+        is_pricing_query = any(k in user_query.lower() for k in pricing_keywords)
+        
+        if is_pricing_query:
+            tile_results = []
+
         # Format conversation history
         history_text = ""
         if history:
