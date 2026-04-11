@@ -4,6 +4,18 @@ An end-to-end intelligent sales assistant built for RAK Ceramics. This applicati
 
 The system uses a Retrieval-Augmented Generation (RAG) pipeline powered by ChromaDB and the Google Gemini API, featuring a custom hybrid re-ranking engine to ensure high-accuracy, catalog-exclusive product recommendations without hallucinations.
 
+Try out the Sales Assistant at: https://rak-sales-bot.vercel.app
+
+> [!WARNING]
+> The backend is deployed on Render (free tier). Hence, the backend will sleep after 15 minutes of inactivity. So the first response may take longer than usual (approx. 1 minute).
+
+Images of the Sales Assistant:
+
+![image alt](https://github.com/mohith-anand/RAK-Sales-Bot/blob/b0c0cda5bbbf4e1a1943d4e9636989dd19e6ef10/Image%201.png)
+
+![image alt](https://github.com/mohith-anand/RAK-Sales-Bot/blob/b0c0cda5bbbf4e1a1943d4e9636989dd19e6ef10/Image%202.png)
+
+![image alt](https://github.com/mohith-anand/RAK-Sales-Bot/blob/b0c0cda5bbbf4e1a1943d4e9636989dd19e6ef10/Image%203.png)
 
 ## 🧠 Key AI Capabilities
 
