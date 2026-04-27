@@ -20,16 +20,21 @@ Images of the Sales Assistant:
 ## 🧠 Key AI Capabilities
 
 ### 1. Hybrid RAG Pipeline
-Built on a **Retrieval-Augmented Generation (RAG)** architecture, the system uses **ChromaDB** to index the RAK product catalog. It translates natural language into high-dimensional vectors, allowing users to search by "vibe" and "look" rather than just keywords.
+Built on a **Retrieval-Augmented Generation (RAG)** architecture, the system uses **ChromaDB** to index the RAK product catalog. It translates natural language into high-dimensional vectors (using `gemini-embedding-2`), allowing users to search by "vibe" and "look" rather than just keywords. A strict **0.70 Cosine Similarity Gate** intercepts irrelevant inputs before they reach the LLM, heavily reducing hallucinations.
 
-### 2. Expert Re-Ranking Engine
-Vector similarity alone isn't enough for sales. Our custom **Re-ranking Logic** applies business-aware weighted scoring to the top search candidates:
+### 2. Dual-Layer Intent Classification
+To optimize API quota and response latency, the system routes queries through a fast hybrid intent classifier:
+- **Fast Heuristics**: Instantly blocks conversational noise, pricing inquiries, and greetings using deterministic caching rules.
+- **LLM Routing**: Contextual inquiries are routed to a RAG chain to determine if a vector DB extraction is necessary.
+
+### 3. Expert Re-Ranking Engine
+Vector similarity alone isn't enough for sales. Our custom **Re-ranking Logic** applies business-aware weighted scoring to the top 60 search candidates:
 - **Material Integrity**: Prevents "wood look" tiles from appearing when searching for "marble."
 - **Constraint Satisfaction**: Forces strict compliance with Finish (Matt/Polished), Color, Size, and Suitability (Commercial/Domestic).
 - **Diversity Algorithm**: Ensures the top 3 results come from different product series to maximize catalog exposure.
 
-### 3. Session-Aware Context
-Using **Gemini 2.5 Flash**, the advisor maintains a 10-message conversational memory. This enables complex, multi-turn design discussions (e.g., *"Show me those in grey,"* or *"What was the size of the first one?"*).
+### 4. Dual-Model Architecture
+Using **Gemini 2.5 Flash** for production speed, the advisor maintains a 10-message conversational memory handling multi-turn design discussions (e.g., *"Show me those in grey"*). Internally, the Evaluation and System Audit suite uses the rigorous **Gemini 3.0 Flash Preview** model as a benchmark Judge.
 
 ---
 
@@ -46,6 +51,35 @@ The engine was tested against a suite of 20 complex architectural queries:
 - **Constraint Satisfaction Rate (CSR)**: 96.7% (vs 83% baseline)
 - **Mean Reciprocal Rank (MRR)**: 0.983
 - **Series Diversity Score**: 86.7%
+
+### **Complete E2E Assessment**
+Run the advanced evaluation suite to test Generation, Refusals, and Coherence:
+```bash
+python scripts/evaluate_e2e.py
+```
+This script uses **LLM-as-a-Judge** to verify:
+- **Faithfulness**: Zero tolerance for hallucinations.
+- **Refusal Accuracy**: Proper handling of pricing/competitor queries.
+- **Multi-turn Logic**: Consistency across sequential design prompts.
+
+### **Comprehensive System Health Check**
+A full 8-layer system audit (`system_health_check.py`) was run against the entire RAG pipeline yielding a **100% Pass Rate (37/37 tests)**:
+
+| Layer | Component | Result |
+|---|---|---|
+| **Layer 0** | Database Integrity | ✅ 547 properties indexed |
+| **Layer 1** | Embedding & Vector Retrieval | ✅ Passing (valid metadata/vectors) |
+| **Layer 2** | Similarity Threshold Gate | ✅ Passing (rejects non-ceramics at < 0.70) |
+| **Layer 3** | Re-ranking Rules | ✅ Passing (material, surface, color, size) |
+| **Layer 4** | Diversity Algorithm | ✅ Passing (results from ≥2 series) |
+| **Layer 5** | Intent Classifier | ✅ Passing (blocks rate limits via heuristic layer) |
+| **Layer 6** | E2E Pipeline (Search + Generate) | ✅ Passing (accurate context generation) |
+| **Layer 7** | Safety & Refusal Guards | ✅ Passing (blocks pricing/competitors) |
+
+To run the full suite:
+```bash
+python scripts/system_health_check.py
+```
 
 ---
 

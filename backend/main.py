@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-# Points to the .env in your root folder
+# Load environment variables from the project root
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 load_dotenv(dotenv_path)
 
@@ -14,9 +14,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Allowed origins — set ALLOWED_ORIGINS in your environment (comma-separated).
-# Example: ALLOWED_ORIGINS=https://your-app.vercel.app
-# Falls back to localhost only for local development.
+# Allowed origins for CORS (comma-separated list defined in environment).
+# Falls back to local development defaults if undefined.
 _raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173")
 allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
@@ -28,7 +27,7 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 
-# It is good practice to add a prefix so your URL is /api/search
+# Prefix API routes for versioning and clarity
 app.include_router(search_router, prefix="/api")
 
 # Mount static files for product images

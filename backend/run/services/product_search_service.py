@@ -13,15 +13,16 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-# --- CRITICAL PATH ALIGNMENT ---
-# BASE_DIR is 'backend/run/services'
+# Setup paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# PROJECT_ROOT is 'backend/' (Up two levels from services)
 PROJECT_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))
 
 # Path to the vector database in project/data/vector_db
 CHROMA_PATH = os.path.join(PROJECT_ROOT, "data", "vector_db")
 EMBEDDING_MODEL = "models/gemini-embedding-2"
+
+# Minimum cosine similarity for a result to be considered relevant based on calibrations.
+MIN_SIMILARITY_THRESHOLD = 0.70
 
 # Initialize ChromaDB
 client = chromadb.PersistentClient(path=CHROMA_PATH)
@@ -50,11 +51,20 @@ def search_tiles(user_query: str, n_results: int = 3):
         else result["embeddings"][0]
     )
 
-    # 2. Vector Search (Fetch 60 candidates for re-ranking)
+    # 2. Vector Search (Fetch broad candidate pool for re-ranking)
     raw_results = collection.query(
         query_embeddings=[query_embedding],
         n_results=60
     )
+
+    # Early exit if no results exceed the semantic similarity threshold.
+    # Note: ChromaDB returns cosine distance. Similarity = 1 - distance.
+    if not raw_results["ids"][0]:
+        return []
+    best_similarity = 1 - raw_results["distances"][0][0]  # top result
+    if best_similarity < MIN_SIMILARITY_THRESHOLD:
+        print(f"[Threshold] Query '{user_query}' rejected (best similarity: {best_similarity:.3f} < {MIN_SIMILARITY_THRESHOLD})")
+        return []
 
     processed_list = []
 
@@ -79,7 +89,7 @@ def search_tiles(user_query: str, n_results: int = 3):
         application = metadata.get("application", "").lower()
         tile_size_raw = metadata.get("size_cm", "").lower().replace(" ", "")
 
-        # --- Keyword Flags ---
+        # Extract query intents for finish and application
         polished_query = any(word in query_lower for word in ["polished", "gloss", "shiny", "reflective", "high gloss"])
         matt_query = any(word in query_lower for word in ["matt", "matte", "natural"])
         outdoor_query = any(word in query_lower for word in ["outdoor", "exterior", "patio", "garden"])
@@ -87,7 +97,7 @@ def search_tiles(user_query: str, n_results: int = 3):
         wall_query = "wall" in query_lower
         floor_query = "floor" in query_lower
 
-        # --- Rule 1: Material Look (CRITICAL) ---
+        # Evaluate material matching
         material_keywords = {
             "marble": "marble",
             "concrete": "concrete",
@@ -117,21 +127,21 @@ def search_tiles(user_query: str, n_results: int = 3):
                 if material == category_raw:
                     final_score += 0.50
 
-        # --- Rule 2: Exact Series Name Match ---
+        # Evaluate exact series name matching
         series_name = metadata.get("series_name", "").lower()
         if series_name and series_name in query_lower:
-            final_score += 1.0  # Huge boost for specific collection mention
+            final_score += 1.0  # Significant boost for specific collection requests
 
-        # --- Rule 2: Surface Finish (STRICT) ---
+        # Evaluate surface finish matching
         if polished_query:
             if "polished" in surface: final_score += 0.50
             elif "matt" in surface: final_score -= 1.5 # STRICT PENALTY
         
         if matt_query:
             if "matt" in surface: final_score += 0.40
-            elif "polished" in surface: final_score -= 1.5 # STRICT PENALTY
+            elif "polished" in surface: final_score -= 1.5 
 
-        # --- Rule 3: Color Grouping (STRICT) ---
+        # Evaluate color group matching
         color_groups = {
             "white_light": ["white", "active white", "supreme white", "white venato", "calacatta", "ivory", "cream", "bone"],
             "grey_silver": ["grey", "gray", "silver grey", "ash", "slate grey", "warm grey", "platinum"],
@@ -154,10 +164,10 @@ def search_tiles(user_query: str, n_results: int = 3):
             else:
                 final_score -= 1.5 # STRICT PENALTY for color mismatch
         elif color in query_lower and len(color) > 2:
-            # Fallback for exact color name matches not in groups
+            # Fallback for exact color name matches outside predefined groups
             final_score += 0.25
 
-        # --- Rule 4: Aesthetics (Minimal/Contemporary) ---
+        # Evaluate aesthetic matching (Minimal/Contemporary)
         minimal_query = any(word in query_lower for word in ["minimal", "sleek", "modern", "contemporary", "simple"])
         if minimal_query:
             # Boost specific collections known for minimal look
@@ -166,11 +176,11 @@ def search_tiles(user_query: str, n_results: int = 3):
             elif any(word in category_raw for word in ["concrete", "cement", "resin"]):
                 final_score += 0.30
 
-        # --- Rule 5: Size Match ---
+        # Evaluate size matching
         if target_size and target_size in tile_size_raw:
             final_score += 0.40
 
-        # --- Rule 6: Usage (Commercial vs Domestic) ---
+        # Evaluate usage suitability (Commercial vs Domestic)
         commercial_query = any(word in query_lower for word in ["commercial", "heavy usage", "office", "mall", "public"])
         heavy_commercial_query = "heavy" in query_lower and "commercial" in query_lower
         
@@ -192,15 +202,13 @@ def search_tiles(user_query: str, n_results: int = 3):
         if "domestic" in query_lower and "domestic" in suitable:
             final_score += 0.20
 
-        # --- Image Path Handling ---
+        # Determine image filename for frontend delivery
         raw_image_path = metadata.get("image_path", "")
-        # Clean the path: it might look like './extracted_images/FILENAME.jpg' or be 'NO MATCH'
-        # We just want the filename to serve it via our /images mount
         image_filename = None
         if raw_image_path and "NO MATCH" not in raw_image_path:
             image_filename = os.path.basename(raw_image_path)
         
-        # --- Compile Result Object ---
+        # Compile result object
         processed_list.append({
             "category": metadata.get("category", "N/A"),
             "series_name": metadata.get("series_name", "Unknown"),

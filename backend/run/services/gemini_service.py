@@ -139,32 +139,46 @@ architects, designers, and homeowners worldwide.
 def requires_product_search(user_query: str, history: list = []) -> bool:
     """
     Analyzes the user's query and conversation history to determine 
-    if a product database search is necessary.
+    if a product database search is necessary. Uses a hybrid approach 
+    (heuristics first, LLM fallback) to save quota and latency.
     """
+    query_lower = user_query.lower()
+    
+    # --- STAGE 1: Fast Heuristics (Save API Quota) ---
+    
+    # 1a. Pricing/Sales Queries (Never search)
+    pricing_keywords = ["price", "cost", "how much", "quote", "budget", "rate", "sq ft", "payment", "sales rep", "call me"]
+    if any(k in query_lower for k in pricing_keywords):
+        return False
+        
+    # 1b. Basic Greetings (Never search)
+    greetings = ["hi", "hello", "hey", "good morning", "good evening", "thanks", "thank you", "bye"]
+    # If the whole query is just a greeting (very short)
+    if any(query_lower.strip() == g.strip() for g in greetings) or len(query_lower) < 3:
+        return False
+
+    # 1c. Competitor/General Company Queries
+    competitors = ["kajaria", "somany", "rak ceramics company", "headquarters", "ceo"]
+    if any(c in query_lower for c in competitors):
+        return False
+
+    # --- STAGE 2: LLM Intent Classification ---
     try:
         history_text = ""
         if history:
             history_text = "\nPrevious Conversation:\n"
-            for msg in history[-5:]:
+            for msg in history[-3:]: # Only need recent context
                 role = "User" if msg.get("role") == "user" else "Assistant"
                 history_text += f"{role}: {msg.get('text', '')}\n"
 
         prompt = f"""
-You are an intent classifier for a tile and ceramics sales chatbot.
-Does the following user query require searching the product database to find specific tiles, ceramics, or product details?
+You are an intent router for a RAK Ceramics sales assistant.
+Decide if the user's current query requires searching the vector database for physical products.
 
-Respond NO if:
-- User is asking about PRICE, COST, or QUOTES (e.g. "how much?", "price list").
-- User is just saying hello or goodbye.
-- User is asking about RAK Ceramics company info or locations.
-- User is asking for a sales representative to contact them.
-
-Respond YES if:
-- User is asking for recommendations based on color, size, material, or space.
-- User is asking for technical specifications of a specific SKU or series.
-- User is asking "What tiles do you have for [X]?".
-
-Respond with ONLY "YES" or "NO".
+RULES:
+- Return "NO" if asking about prices, company history, competitors, general chat, or asking to speak to a human.
+- Return "YES" if asking for recommendations, looking for specific tile styles (e.g. "grey marble", "wood look"), sizes, or technical specs.
+- Return "YES" if it's a follow-up about a product recently discussed (e.g. "what size does that come in?").
 
 {history_text}
 Current Query: {user_query}
@@ -179,8 +193,8 @@ Answer (YES/NO):"""
             
         return "YES" in text
     except Exception as e:
-        print("Intent Classification Error:", str(e))
-        return True  # Default to searching if there's an error
+        print(f"Intent Classification Error: {e}")
+        return True  # Safe default: search if LLM fails
 
 
 def generate_tile_response(user_query: str, tile_results: list, history: list = []):

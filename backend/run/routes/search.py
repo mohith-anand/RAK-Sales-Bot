@@ -15,15 +15,15 @@ def search_products(request: SearchRequest):
     try:
         results = []
         
-        # Smartly determine if a product search is needed for this query
+        # Evaluate intent to determine if database retrieval is necessary
         if requires_product_search(user_query=request.query, history=request.history):
-            # 1. Execute the vector search and re-ranking
+            # 1. Execute vector search and re-ranking
             results = search_tiles(
                 user_query=request.query,
                 n_results=request.n_results
             )
 
-        # 2. Generate the AI sales assistant response using Gemini 2.5 Flash
+        # 2. Generate the AI sales assistant response
         ai_response = generate_tile_response(
             user_query=request.query,
             tile_results=results,
