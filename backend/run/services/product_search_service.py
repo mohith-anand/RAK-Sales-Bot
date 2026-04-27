@@ -21,7 +21,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))
 
 # Path to the vector database in project/data/vector_db
 CHROMA_PATH = os.path.join(PROJECT_ROOT, "data", "vector_db")
-EMBEDDING_MODEL = "models/gemini-embedding-2-preview"
+EMBEDDING_MODEL = "models/gemini-embedding-2"
 
 # Initialize ChromaDB
 client = chromadb.PersistentClient(path=CHROMA_PATH)

@@ -13,7 +13,8 @@ if not api_key:
     raise RuntimeError(f"GEMINI_API_KEY not set. Checked: {dotenv_path}")
 
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel("gemini-2.5-flash")
+model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+model = genai.GenerativeModel(model_name)
 
 SYSTEM_INSTRUCTIONS = """
 You are an expert assistant for RAK Ceramics — one of the world's largest 

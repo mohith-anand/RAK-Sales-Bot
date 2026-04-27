@@ -18,7 +18,7 @@ BACKEND_DIR = os.path.dirname(BASE_DIR)              # .../backend
 CSV_PATH = os.path.join(BACKEND_DIR, "data", "processed_csv", "products_cleaned.csv")
 CHROMA_PATH = os.path.join(BACKEND_DIR, "data", "vector_db")
 
-EMBEDDING_MODEL = "models/gemini-embedding-2-preview"
+EMBEDDING_MODEL = "models/gemini-embedding-2"
 BATCH_SIZE = 50
 
 # Load CSV

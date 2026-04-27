@@ -35,7 +35,7 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 CHROMA_PATH  = str(BACKEND_DIR / "data" / "vector_db")
-EMBED_MODEL  = "models/gemini-embedding-2-preview"
+EMBED_MODEL  = "models/gemini-embedding-2"
 N_RESULTS    = 3       # Top-K to evaluate
 N_CANDIDATES = 60      # Pool size (same as production)
 
