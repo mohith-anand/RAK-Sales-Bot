@@ -4,15 +4,23 @@ import os
 import json
 import google.generativeai as genai
 from dotenv import load_dotenv
+# Load environment variables
 from pathlib import Path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))
 
-dotenv_path = Path(__file__).resolve().parents[2] / '.env'
-load_dotenv(dotenv_path)
+# Search for .env in current and parent dirs
+for p in [Path(BACKEND_ROOT), Path(BACKEND_ROOT).parent]:
+    env_file = p / '.env'
+    if env_file.exists():
+        load_dotenv(env_file)
+
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
-    raise RuntimeError(f"GEMINI_API_KEY not set. Checked: {dotenv_path}")
+    print("\n[WARNING] GEMINI_API_KEY is not set. AI features will fail.")
+else:
+    genai.configure(api_key=api_key)
 
-genai.configure(api_key=api_key)
 model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 model = genai.GenerativeModel(model_name)
 

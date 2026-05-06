@@ -3,22 +3,25 @@ import re
 import chromadb
 import google.generativeai as genai
 from dotenv import load_dotenv
-# Load API Key from project root .env (relative to backend/run/services)
+# Load environment variables
 from pathlib import Path
-dotenv_path = Path(__file__).resolve().parents[2] / '.env'
-load_dotenv(dotenv_path)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))
+
+# Search for .env in current and parent dirs
+for p in [Path(BACKEND_ROOT), Path(BACKEND_ROOT).parent]:
+    env_file = p / '.env'
+    if env_file.exists():
+        load_dotenv(env_file)
+
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
-    raise RuntimeError(f"GEMINI_API_KEY not set. Checked: {dotenv_path}")
+    print("\n[WARNING] GEMINI_API_KEY is not set. AI features will fail.")
+else:
+    genai.configure(api_key=api_key)
 
-genai.configure(api_key=api_key)
-
-# Setup paths
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))
-
-# Path to the vector database in project/data/vector_db
-CHROMA_PATH = os.path.join(PROJECT_ROOT, "data", "vector_db")
+# Path to the vector database in backend/data/vector_db
+CHROMA_PATH = os.path.join(BACKEND_ROOT, "data", "vector_db")
 EMBEDDING_MODEL = "models/gemini-embedding-2"
 
 # Minimum cosine similarity for a result to be considered relevant based on calibrations.
@@ -29,9 +32,9 @@ client = chromadb.PersistentClient(path=CHROMA_PATH)
 
 try:
     collection = client.get_collection("rak_tiles_products")
-    print(f"✅ Connected to Database: {collection.count()} products found.")
+    print(f"[OK] Connected to Database: {collection.count()} products found.")
 except Exception as e:
-    print(f"❌ Error: Could not find collection. Ensure you ran build_vector_db.py first. {e}")
+    print(f"[ERROR] Could not find collection. Ensure you ran build_vector_db.py first. {e}")
     exit()
 
 def search_tiles(user_query: str, n_results: int = 3):

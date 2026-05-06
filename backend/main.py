@@ -3,9 +3,15 @@ from dotenv import load_dotenv
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-# Load environment variables from the project root
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
-load_dotenv(dotenv_path)
+# Load environment variables
+# We try multiple locations to support both local dev and Docker/deployment
+possible_dotenv_paths = [
+    os.path.join(os.path.dirname(__file__), '.env'),      # backend root (Docker)
+    os.path.join(os.path.dirname(__file__), '..', '.env') # project root (Local)
+]
+for path in possible_dotenv_paths:
+    if os.path.exists(path):
+        load_dotenv(path)
 
 from fastapi import FastAPI
 from run.routes.search import router as search_router
@@ -14,18 +20,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Allowed origins for CORS (comma-separated list defined in environment).
-# Falls back to local development defaults if undefined.
-_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173")
+# Allowed origins for CORS (comma-separated list defined in environment)
+# Defaults to localhost for local development
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,http://localhost:5174")
 allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
+# Standard CORS middleware for API accessibility
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["POST", "GET", "OPTIONS"],
-    allow_headers=["Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+print(f"[CORS] Allowed Origins: {allowed_origins}")
 
 # Prefix API routes for versioning and clarity
 app.include_router(search_router, prefix="/api")
