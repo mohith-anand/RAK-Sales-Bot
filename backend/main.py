@@ -13,21 +13,13 @@ for path in possible_dotenv_paths:
     if os.path.exists(path):
         load_dotenv(path)
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from run.routes.search import router as search_router
-import time
 
 app = FastAPI(
     title="RAK Tiles AI API",
     version="1.0.0"
 )
-
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    origin = request.headers.get("origin")
-    print(f"[DEBUG] {request.method} {request.url.path} | Origin: {origin}")
-    response = await call_next(request)
-    return response
 
 # Allowed origins for CORS (comma-separated list defined in environment)
 # Defaults to localhost for local development
@@ -42,8 +34,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-print(f"[CORS] Allowed Origins: {allowed_origins}")
 
 # Prefix API routes for versioning and clarity
 app.include_router(search_router, prefix="/api")
